@@ -29,7 +29,7 @@ class RSSspider(Spider):
 
         c = csv.writer(open(DATA_FILE, 'wb'))  # First row record, clear all old data
         # data = u'StoreBrand, Address, City, State, Zip, PhoneNumber, StoreNumber'.encode('utf-8')
-        data_header = u'Product, Description, Price, Saving, Valid From, Valid To'.encode('utf-8')
+        data_header = u'Product, Description, Price, Saving, Valid From, Valid To, Image Path'.encode('utf-8')
         c.writerow(data_header.split(','))
 
     def task_generator(self):
@@ -95,7 +95,8 @@ class RSSspider(Spider):
                 image_link = item['vertis_itemlargeimage']
                 base_name = IMAGE_DIR + sha1(image_link).hexdigest() + '.jpg'
                 # image = sys.path.join([IMAGE_DIR, brand, base_name])
-                self.add_task(Task(name='save_image', url=image_link, image_name=base_name))
+                image = base_name
+                self.add_task(Task(name='save_image', url=image_link, image_name=image))
             except Exception:
                 pass
 
@@ -111,10 +112,8 @@ class RSSspider(Spider):
             c.writerow(data)
 
     def task_save_image(self, grab, task):
-        print task.url
         name = task.image_name
         grab.response.save(name, create_dirs=True)
-        print name
 
 
 def main():
