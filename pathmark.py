@@ -10,13 +10,14 @@ from grab.tools import html
 
 from grab.tools.logs import default_logging
 from hashlib import sha1
+import sys
 
 default_logging(level=logging.DEBUG)
 
 URLS_FILE = 'urls.txt'
-RSS_LINK = '/rss.jsp?drpStoreID={0}'
+RSS_LINK = 'http://pathmark.inserts2online.com/rss.jsp?drpStoreID={0}'
 
-IMAGE_DIR = 'images'
+IMAGE_DIR = 'images/'
 DATA_FILE = 'data.csv'
 
 THREADS = 2
@@ -39,35 +40,69 @@ class RSSspider(Spider):
 
     def task_initial(self, grab, task):
 
+        brand = ''
+        store_number = ''
         places = grab.xpath_list('//div[@id="circular-stores"]/div')
         for place in places:
-            brand = place.find('div[@class="store-brand-pm"]')
-            address = place.find('div[@class="store-title"]')
-            city = place.find('div/span[@class="store-city"]')
-            state = place.find('div/span[@class="store-state"]')
-            zip = place.find('div/span[@class="store-zipcode"]')
-            phone = place.find('div[@class="store-phone"]')
+            brand = place.find('div[@class="store-brand-pm"]').text_content()
+            address = place.find('div[@class="store-title"]').text_content()
+            city = place.find('div/span[@class="store-city"]').text_content()
+            state = place.find('div/span[@class="store-state"]').text_content()
+            zip = place.find('div/span[@class="store-zipcode"]').text_content()
+            phone = place.find('div[@class="store-phone"]').text_content()
             store_number = place.attrib['class'].split('-')[-1]
 
-        link = task.base_url + RSS_LINK.format(store_number)
+        # Just move to grab all places
+        link = RSS_LINK.format(store_number)
+        print link
 
         feed = feedparser.parse(link)
         for item in feed['items']:
-            product = item['title']
-            description = html.strip_tags(item['description'])
-            price = item['vertis_price']
-            saving = item['vertis_moreprice']
-            valid_from = item['vertis_psdate']
-            valid_to = item['vertis_edate']
-
-            image_link = item['vertis_itemlargeimage']
-            base_name = sha1(image_link).hexdigest()
-            image = '/'.join([IMAGE_DIR, brand, base_name]) + '.jpg'
-            self.add_task(Task(name='save_image', url=image, image_name=image))
+            product = ''
+            description = ''
+            price = ''
+            saving = ''
+            valid_from = ''
+            valid_to = ''
 
             try:
-                data = [product, description, price, saving,
-                        valid_from, valid_to, image]
+                product = item['title']
+            except Exception:
+                pass
+            try:
+                description = html.strip_tags(item['description'])
+            except Exception:
+                pass
+            try:
+                price = item['vertis_price']
+            except Exception:
+                pass
+            try:
+                saving = item['vertis_moreprice']
+            except Exception:
+                pass
+            try:
+                valid_from = item['vertis_psdate']
+            except Exception:
+                pass
+            try:
+                valid_to = item['vertis_edate']
+            except Exception:
+                pass
+
+            image = ''
+            try:
+                image_link = item['vertis_itemlargeimage']
+                base_name = IMAGE_DIR + sha1(image_link).hexdigest() + '.jpg'
+                # image = sys.path.join([IMAGE_DIR, brand, base_name])
+                self.add_task(Task(name='save_image', url=image_link, image_name=base_name))
+            except Exception:
+                pass
+
+            data = ''
+            try:
+                data = [product.encode('utf-8'), description.encode('utf-8'), price.encode('utf-8'),
+                        saving.encode('utf-8'), valid_from.encode('utf-8'), valid_to.encode('utf-8'), image]
             except Exception, ex:
                 print ex
                 import pdb
@@ -76,8 +111,10 @@ class RSSspider(Spider):
             c.writerow(data)
 
     def task_save_image(self, grab, task):
+        print task.url
         name = task.image_name
         grab.response.save(name, create_dirs=True)
+        print name
 
 
 def main():
@@ -97,4 +134,5 @@ def main():
 
 if __name__ == '__main__':
     print 'Start working'
+    default_logging(level=logging.DEBUG)
     main()
