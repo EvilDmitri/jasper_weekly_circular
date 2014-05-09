@@ -4,6 +4,7 @@
 import csv
 import logging
 import feedparser
+from datetime import datetime
 
 from grab.spider import Spider, Task
 from grab.tools import html
@@ -83,10 +84,14 @@ class RSSspider(Spider):
                 pass
             try:
                 valid_from = item['vertis_psdate']
+                valid_from = datetime.strptime(' '.join(valid_from.split(' ')[:-1]), '%a, %d %B %Y %H:%M:%S')
+                valid_from = valid_from.strftime('%d/%m/%Y')
             except Exception:
                 pass
             try:
                 valid_to = item['vertis_edate']
+                valid_to = datetime.strptime(' '.join(valid_to.split(' ')[:-1]), '%a, %d %B %Y %H:%M:%S')
+                valid_to = valid_to.strftime('%d/%m/%Y')
             except Exception:
                 pass
 
@@ -103,7 +108,7 @@ class RSSspider(Spider):
             data = ''
             try:
                 data = [product.encode('utf-8'), description.encode('utf-8'), price.encode('utf-8'),
-                        saving.encode('utf-8'), valid_from.encode('utf-8'), valid_to.encode('utf-8'), image]
+                        saving.encode('utf-8'), valid_from, valid_to, image]
             except Exception, ex:
                 print ex
                 import pdb
