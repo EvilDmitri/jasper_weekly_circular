@@ -1,7 +1,8 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 
 
 import csv
+import json
 import logging
 import feedparser
 from datetime import datetime
@@ -34,10 +35,11 @@ class RSSspider(Spider):
         c.writerow(data_header.split(','))
 
     def task_generator(self):
-        with open(URLS_FILE) as f:
-            for url in f:
-                if url.strip():
-                    yield Task('initial', url=url.strip() + '/weekly-circular', base_url=url.strip())
+        with open(URLS_FILE) as json_data:
+            data = json.load(json_data)
+            sites = data['sites']
+            for site in sites:
+                yield Task('initial', url=site['link'], rss_url=site['rss'])
 
     def task_initial(self, grab, task):
 
@@ -54,7 +56,7 @@ class RSSspider(Spider):
             store_number = place.attrib['class'].split('-')[-1]
 
         # Just move to grab all places
-        link = RSS_LINK.format(store_number)
+        link = task.rss_url.format(store_number)
         print link
 
         feed = feedparser.parse(link)

@@ -1,2 +1,29 @@
-http://pathmark.apsupermarket.com
+{
+"sites": [
+{
+"link": "http://apsupermarket.com/weekly-circular",
+"rss": "http://apfreshonline.inserts2online.com/rss.jsp?drpStoreID={0}&categories=all"
+},
 
+{
+"link": "http://waldbaums.apsupermarket.com/weekly-circular",
+"rss": "http://waldbaums.inserts2online.com/rss.jsp?drpStoreID={0}&categories=all"
+},
+
+{
+"link": "http://superfresh.apsupermarket.com/weekly-circular",
+"rss": "http://superfreshfood.inserts2online.com/rss.jsp?drpStoreID={0}&categories=all"
+},
+
+{
+"link": "http://foodemporium.apsupermarket.com/weekly-circular",
+"rss": "http://thefoodemporium.inserts2online.com/rss.jsp?drpStoreID={0}&categories=all"
+},
+
+
+{
+"link": "http://foodbasics.apsupermarket.com/weekly-circular",
+"rss": "http://foodbasicsusa.inserts2online.com/rss.jsp?drpStoreID={0}&categories=all"
+}
+]
+}
