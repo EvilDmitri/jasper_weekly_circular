@@ -4,6 +4,7 @@
 import csv
 import json
 import logging
+import os
 import feedparser
 from datetime import datetime
 
@@ -29,11 +30,6 @@ class RSSspider(Spider):
     def __init__(self):
         super(RSSspider, self).__init__(thread_number=THREADS, network_try_limit=20)
 
-        c = csv.writer(open(DATA_FILE, 'wb'))  # First row record, clear all old data
-        # data = u'StoreBrand, Address, City, State, Zip, PhoneNumber, StoreNumber'.encode('utf-8')
-        data_header = u'Product, Description, Price, Saving, Valid From, Valid To, Image Path'.encode('utf-8')
-        c.writerow(data_header.split(','))
-
     def task_generator(self):
         with open(URLS_FILE) as json_data:
             data = json.load(json_data)
@@ -42,12 +38,11 @@ class RSSspider(Spider):
                 yield Task('initial', url=site['link'], rss_url=site['rss'])
 
     def task_initial(self, grab, task):
-
         brand = ''
         store_number = ''
         places = grab.xpath_list('//div[@id="circular-stores"]/div')
         for place in places:
-            brand = place.find('div[@class="store-brand-pm"]').text_content()
+            brand = place[0].text_content()
             address = place.find('div[@class="store-title"]').text_content()
             city = place.find('div/span[@class="store-city"]').text_content()
             state = place.find('div/span[@class="store-state"]').text_content()
@@ -55,68 +50,71 @@ class RSSspider(Spider):
             phone = place.find('div[@class="store-phone"]').text_content()
             store_number = place.attrib['class'].split('-')[-1]
 
-        # Just move to grab all places
-        link = task.rss_url.format(store_number)
-        print link
+            link = task.rss_url.format(store_number)
+            feed = feedparser.parse(link)
+            file_name = link.split('//')[1].split('.')[0]     # Get the first domain name from the url as the leading path
 
-        feed = feedparser.parse(link)
-        for item in feed['items']:
-            product = ''
-            description = ''
-            price = ''
-            saving = ''
-            valid_from = ''
-            valid_to = ''
+            directory = os.path.join('data', file_name, store_number)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            file_name = os.path.join(directory, 'data.csv')
+            print file_name
+            f = csv.writer(open(file_name, 'wb'))
+            # First row record, clear all old data
+            # data = u'StoreBrand, Address, City, State, Zip, PhoneNumber, StoreNumber'.encode('utf-8')
+            data_header = u'Product, Description, Price, Saving, Valid From, Valid To, Image Path'.encode('utf-8')
+            f.writerow(data_header.split(','))
 
-            try:
-                product = item['title']
-            except Exception:
-                pass
-            try:
-                description = html.strip_tags(item['description'])
-            except Exception:
-                pass
-            try:
-                price = item['vertis_price']
-            except Exception:
-                pass
-            try:
-                saving = item['vertis_moreprice']
-            except Exception:
-                pass
-            try:
-                valid_from = item['vertis_psdate']
-                valid_from = datetime.strptime(' '.join(valid_from.split(' ')[:-1]), '%a, %d %B %Y %H:%M:%S')
-                valid_from = valid_from.strftime('%d/%m/%Y')
-            except Exception:
-                pass
-            try:
-                valid_to = item['vertis_edate']
-                valid_to = datetime.strptime(' '.join(valid_to.split(' ')[:-1]), '%a, %d %B %Y %H:%M:%S')
-                valid_to = valid_to.strftime('%d/%m/%Y')
-            except Exception:
-                pass
+            for item in feed['items']:
+                product = ''
+                description = ''
+                price = ''
+                saving = ''
+                valid_from = ''
+                valid_to = ''
 
-            image = ''
-            try:
-                image_link = item['vertis_itemlargeimage']
-                base_name = IMAGE_DIR + sha1(image_link).hexdigest() + '.jpg'
-                # image = sys.path.join([IMAGE_DIR, brand, base_name])
-                image = base_name
-                self.add_task(Task(name='save_image', url=image_link, image_name=image))
-            except Exception:
-                pass
+                try:
+                    product = item['title']
+                except Exception:
+                    pass
+                try:
+                    description = html.strip_tags(item['description'])
+                except Exception:
+                    pass
+                try:
+                    price = item['vertis_price']
+                except Exception:
+                    pass
+                try:
+                    saving = item['vertis_moreprice']
+                except Exception:
+                    pass
+                try:
+                    valid_from = item['vertis_psdate']
+                    valid_from = datetime.strptime(' '.join(valid_from.split(' ')[:-1]), '%a, %d %B %Y %H:%M:%S')
+                    valid_from = valid_from.strftime('%d/%m/%Y')
+                except Exception:
+                    pass
+                try:
+                    valid_to = item['vertis_edate']
+                    valid_to = datetime.strptime(' '.join(valid_to.split(' ')[:-1]), '%a, %d %B %Y %H:%M:%S')
+                    valid_to = valid_to.strftime('%d/%m/%Y')
+                except Exception:
+                    pass
 
-            data = ''
-            try:
+                image = ''
+                try:
+                    image_link = item['vertis_itemlargeimage']
+                    base_name = os.path.join(IMAGE_DIR, brand, sha1(image_link).hexdigest()+'.jpg')
+                    # image = sys.path.join([IMAGE_DIR, brand, base_name])
+                    image = base_name
+                    self.add_task(Task(name='save_image', url=image_link, image_name=image))
+                except Exception:
+                    pass
+
                 data = [product.encode('utf-8'), description.encode('utf-8'), price.encode('utf-8'),
                         saving.encode('utf-8'), valid_from, valid_to, image]
-            except Exception, ex:
-                print ex
-                import pdb
-                pdb.set_trace()
-            c = csv.writer(open('data.csv', 'ab'))
-            c.writerow(data)
+                f.writerow(data)
 
     def task_save_image(self, grab, task):
         name = task.image_name
