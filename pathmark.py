@@ -62,7 +62,7 @@ class RSSspider(Spider):
             f = csv.writer(open(file_name, 'wb'))
             # First row record, clear all old data
             # data = u'StoreBrand, Address, City, State, Zip, PhoneNumber, StoreNumber'.encode('utf-8')
-            data_header = u'Product, Description, Price, Saving, Valid From, Valid To, Image Path'.encode('utf-8')
+            data_header = u'Store Number, Product, Description, Price, Saving, Valid From, Valid To, Image Path'.encode('utf-8')
             f.writerow(data_header.split(','))
 
             for item in feed['items']:
@@ -112,7 +112,7 @@ class RSSspider(Spider):
                 except Exception:
                     pass
 
-                data = [product.encode('utf-8'), description.encode('utf-8'), price.encode('utf-8'),
+                data = [store_number.encode('utf-8'), product.encode('utf-8'), description.encode('utf-8'), price.encode('utf-8'),
                         saving.encode('utf-8'), valid_from, valid_to, image]
                 f.writerow(data)
 
