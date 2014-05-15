@@ -1,7 +1,7 @@
 from time import gmtime, strftime
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, orm
 
-engine = create_engine('mysql://localhost/scraper_data')
+engine = create_engine('mysql://scraper@localhost/scraper_data')
 
 meta = MetaData()
 
