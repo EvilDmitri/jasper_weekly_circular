@@ -9,7 +9,8 @@ table_name = strftime('%d_%m_%Y_%H_%M_%S', gmtime())
 
 # Store Number, Product, Description, Price, Saving, Valid From, Valid To, Image Path
 data_table = Table(table_name, meta,
-                   Column('store_number', Integer, primary_key=True),
+                   Column('id', Integer, primary_key=True, autoincrement=True),
+                   Column('store_number', String(254)),
                    Column('product', String(254)),
                    Column('description', String(10000)),
                    Column('price', String(1024)),
@@ -23,8 +24,8 @@ meta.create_all(engine)
 
 
 class Data(object):
-    def __init__(self, store_data, product, description, price, saving, valid_from, valid_to, image_path):
-        self.store_data = store_data
+    def __init__(self, store_number, product, description, price, saving, valid_from, valid_to, image_path):
+        self.store_number = store_number
         self.product = product
         self.description = description
         self.price = price
