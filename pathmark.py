@@ -1,7 +1,7 @@
  # -*- coding: utf-8 -*-
 
+from models import Data, session
 
-import csv
 import json
 import logging
 import os
@@ -13,7 +13,6 @@ from grab.tools import html
 
 from grab.tools.logs import default_logging
 from hashlib import sha1
-import sys
 
 default_logging(level=logging.DEBUG)
 
@@ -23,8 +22,7 @@ URLS_FILE = os.path.join(path, 'urls.txt')
 
 RSS_LINK = 'http://pathmark.inserts2online.com/rss.jsp?drpStoreID={0}'
 
-IMAGE_DIR = 'images/'
-DATA_FILE = 'data.csv'
+IMAGE_DIR = os.path.join(path, 'images/')
 
 THREADS = 2
 
@@ -55,18 +53,6 @@ class RSSspider(Spider):
 
             link = task.rss_url.format(store_number)
             feed = feedparser.parse(link)
-            file_name = link.split('//')[1].split('.')[0]     # Get the first domain name from the url as the leading path
-
-            directory = os.path.join('data', file_name, store_number)
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            file_name = os.path.join(directory, 'data.csv')
-            print file_name
-            f = csv.writer(open(file_name, 'wb'))
-            # First row record, clear all old data
-            # data = u'StoreBrand, Address, City, State, Zip, PhoneNumber, StoreNumber'.encode('utf-8')
-            data_header = u'Store Number, Product, Description, Price, Saving, Valid From, Valid To, Image Path'.encode('utf-8')
-            f.writerow(data_header.split(','))
 
             for item in feed['items']:
                 product = ''
@@ -115,9 +101,12 @@ class RSSspider(Spider):
                 except Exception:
                     pass
 
-                data = [store_number.encode('utf-8'), product.encode('utf-8'), description.encode('utf-8'), price.encode('utf-8'),
-                        saving.encode('utf-8'), valid_from, valid_to, image]
-                f.writerow(data)
+                data = Data(store_number.encode('utf-8'), product.encode('utf-8'), description.encode('utf-8'), price.encode('utf-8'),
+                            saving.encode('utf-8'), valid_from, valid_to, image)
+
+                session.add(data)
+                session.commit()
+
 
     def task_save_image(self, grab, task):
         name = task.image_name
