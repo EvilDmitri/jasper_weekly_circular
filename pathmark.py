@@ -17,7 +17,10 @@ import sys
 
 default_logging(level=logging.DEBUG)
 
-URLS_FILE = 'urls.txt'
+path = os.path.dirname(os.path.abspath(__file__))
+URLS_FILE = os.path.join(path, 'urls.txt')
+
+
 RSS_LINK = 'http://pathmark.inserts2online.com/rss.jsp?drpStoreID={0}'
 
 IMAGE_DIR = 'images/'
