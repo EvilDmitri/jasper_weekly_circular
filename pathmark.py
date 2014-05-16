@@ -1,6 +1,6 @@
  # -*- coding: utf-8 -*-
 
-from models import Data, session
+from models import Data, session, table_name
 
 import json
 import logging
@@ -94,7 +94,7 @@ class RSSspider(Spider):
                 image = ''
                 try:
                     image_link = item['vertis_itemlargeimage']
-                    base_name = os.path.join(IMAGE_DIR, brand, sha1(image_link).hexdigest()+'.jpg')
+                    base_name = os.path.join(IMAGE_DIR, table_name, brand, sha1(image_link).hexdigest()+'.jpg')
                     # image = sys.path.join([IMAGE_DIR, brand, base_name])
                     image = base_name
                     self.add_task(Task(name='save_image', url=image_link, image_name=image))
